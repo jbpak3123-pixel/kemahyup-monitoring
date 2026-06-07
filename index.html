@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="케마협 모니터링">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2D7A5F">
+<title>케마협 PTC 모니터링</title>
+<style>
+:root{
+  --g1:#2D7A5F; --g2:#1D9E75; --g3:#E1F5EE; --g4:#A8DBC8;
+  --b1:#2563A8; --b2:#E6F1FB;
+  --a1:#8B5E0A; --a2:#FDF3E3;
+  --r1:#9B3622; --r2:#FDEEE9;
+  --p1:#4A42A0; --p2:#EEECFD;
+  --gray:#6B6860; --gray2:#F4F2ED;
+  --bg:#F6F4EF; --card:#FFFFFF;
+  --txt:#1C1C1A; --txt2:#5C5A56; --txt3:#9A9893;
+  --bdr:rgba(0,0,0,0.09);
+  --rad:16px; --rad-sm:10px;
+  --tab-h:68px;
+  --warm-bg: linear-gradient(160deg,#2D7A5F 0%,#1a5c45 60%,#134d39 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--txt);padding-bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 8px);font-size:15px;min-height:100vh}
+
+/* ─────────────────────────────
+   HERO HEADER
+───────────────────────────── */
+.hero{
+  background: var(--warm-bg);
+  padding:22px 18px 20px;
+  position:relative;
+  overflow:hidden;
+}
+/* decorative circles */
+.hero::before{
+  content:'';position:absolute;width:200px;height:200px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.12);
+  right:-50px;top:-60px;
+}
+.hero::after{
+  content:'';position:absolute;width:130px;height:130px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.10);
+  right:30px;top:20px;
+}
+.hero-org strong{font-size:14px;color:#fff;font-weight:600;display:block;margin-top:1px}
+.hero-title{
+  font-size:26px;font-weight:800;color:#fff;
+  line-height:1.25;letter-spacing:-.03em;
+  margin-bottom:8px;position:relative;z-index:1;
+}
+.hero-title span{color:#A8DBC8}
+.hero-timestamp{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:20px;padding:5px 12px;
+  font-size:12px;color:rgba(255,255,255,0.9);
+  position:relative;z-index:1;
+}
+.hero-timestamp svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+/* leaf deco */
+.hero-deco{position:absolute;right:18px;bottom:16px;z-index:1;opacity:.18}
+.hero-deco svg{width:72px;height:72px;fill:#fff}
+
+/* ─────────────────────────────
+   SUMMARY TILES — main cards
+───────────────────────────── */
+.tiles-wrap{padding:12px 14px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tile{
+  background:var(--card);border-radius:14px;border:1px solid var(--bdr);
+  padding:16px 8px 13px;display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;transition:all .18s;user-select:none;position:relative;
+  -webkit-user-select:none;box-shadow:0 1px 4px rgba(0,0,0,0.06);
+}
+.tile:active{transform:scale(.96)}
+.tile.active-tile{border-width:2px}
+.tile-icon{margin-bottom:5px}
+.tile-icon svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tile-num{font-size:28px;font-weight:800;line-height:1.1;margin-bottom:3px}
+.tile-lbl{font-size:10px;color:var(--txt3);font-weight:500;letter-spacing:.01em}
+.tile-badge{
+  position:absolute;top:7px;right:7px;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--r1);color:#fff;
+  font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* expanded panel below tiles */
+.tile-panel{
+  display:none;background:var(--card);
+  border-radius:16px;border:1px solid var(--bdr);
+  margin:10px auto 0;
+  width:calc(100% - 32px);
+  overflow:hidden;
+}
+@media(min-width:520px){
+  .tile-panel{width:650px;margin-left:auto;margin-right:auto}
+}
+.tile-panel.open{display:block}
+.panel-header{
+  padding:12px 16px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.panel-header-title{font-size:13px;font-weight:700;color:var(--txt)}
+.panel-close{font-size:20px;color:var(--txt3);border:none;background:none;cursor:pointer;line-height:1;padding:10px 12px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+.panel-list{}
+.panel-item{
+  padding:11px 16px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:10px;
+}
+.panel-item:last-child{border-bottom:none}
+.pi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pi-body{flex:1;min-width:0}
+.pi-name{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi-sub{font-size:11px;color:var(--txt3)}
+.pi-badge{font-size:10px;padding:2px 7px;border-radius:8px;flex-shrink:0;font-weight:600}
+
+/* ─────────────────────────────
+   SECTION & FILTER
+───────────────────────────── */
+.content-area{padding:14px 16px 0}
+@media(min-width:520px){
+  .content-area{padding:16px 24px 0}
+}
+.filter-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:14px}
+.filter-scroll::-webkit-scrollbar{display:none}.filter-scroll{-ms-overflow-style:none;scrollbar-width:none}
+.f-btn{
+  flex-shrink:0;font-size:12px;font-weight:500;
+  padding:9px 14px;border-radius:20px;
+  border:1px solid var(--bdr);background:var(--card);
+  color:var(--txt2);cursor:pointer;transition:all .15s;
+  font-family:inherit;min-height:44px;
+}
+.f-btn.on{background:var(--g1);color:#fff;border-color:var(--g1)}
+.sec-label{
+  font-size:11px;font-weight:700;color:var(--txt3);
+  letter-spacing:.07em;text-transform:uppercase;
+  margin:16px 0 10px;display:flex;align-items:center;gap:6px;
+}
+.sec-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ─────────────────────────────
+   CARDS
+───────────────────────────── */
+.card{
+  background:var(--card);border-radius:var(--rad);
+  border:1px solid var(--bdr);margin-bottom:10px;
+  overflow:hidden;position:relative;
+}
+.card-accent{position:absolute;left:0;top:0;bottom:0;width:5px}
+.card-body{padding:14px 14px 14px 19px}
+.pri-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:700;padding:3px 9px;
+  border-radius:7px;margin-bottom:9px;
+}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
+.card-title{font-size:14px;font-weight:700;color:var(--txt);line-height:1.45;flex:1}
+.status-pill{flex-shrink:0;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
+.s-open{background:var(--g3);color:var(--g1)}
+.s-prep{background:var(--b2);color:var(--b1)}
+.s-watch{background:var(--a2);color:var(--a1)}
+.card-org{font-size:12px;color:var(--txt3);margin-bottom:9px}
+.tag-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.tag{font-size:11px;padding:3px 8px;border-radius:7px}
+.card-meta{font-size:12px;color:var(--txt2);display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.meta-row{display:flex;align-items:flex-start;gap:5px}
+.meta-icon{flex-shrink:0;margin-top:1px}
+
+/* score */
+.score-wrap{margin-bottom:10px}
+.score-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.score-lbl{font-size:11px;color:var(--txt3);width:50px;flex-shrink:0}
+.score-track{flex:1;height:5px;background:var(--gray2);border-radius:3px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.score-val{font-size:11px;font-weight:700;color:var(--txt2);width:28px;text-align:right}
+
+.card-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px 10px 19px;border-top:1px solid var(--bdr);
+  background:var(--gray2);gap:8px;
+}
+.foot-lbl{font-size:11px;color:var(--txt3)}
+.foot-val{font-size:12px;font-weight:600;color:var(--txt);margin-top:1px}
+.ext-btn{
+  font-size:12px;color:var(--g1);
+  display:inline-flex;align-items:center;gap:3px;
+  background:var(--g3);border:none;padding:10px 14px;
+  border-radius:var(--rad-sm);cursor:pointer;
+  text-decoration:none;font-weight:600;white-space:nowrap;flex-shrink:0;
+  font-family:inherit;min-height:44px;
+}
+
+/* ─────────────────────────────
+   ESG CARDS
+───────────────────────────── */
+.esg-card{
+  background:var(--card);border-radius:var(--rad);
+  border:1px solid var(--bdr);padding:14px;margin-bottom:10px;
+}
+.esg-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.esg-rank{
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;flex-shrink:0;
+}
+.esg-name{font-size:15px;font-weight:700;color:var(--txt)}
+.esg-sub{font-size:11px;color:var(--txt3);margin-top:1px}
+.stars{font-size:13px;color:#E8A020;margin-bottom:5px}
+.acc-track{height:6px;background:var(--gray2);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.acc-fill{height:100%;border-radius:3px}
+.esg-desc{font-size:12px;color:var(--txt2);line-height:1.7;margin-bottom:9px}
+.ch-box{
+  background:var(--gray2);border-radius:var(--rad-sm);
+  padding:10px 12px;font-size:12px;color:var(--txt2);line-height:1.7;
+}
+
+/* ─────────────────────────────
+   POLICY STEPS
+───────────────────────────── */
+.step{display:flex;gap:12px;margin-bottom:18px;position:relative}
+.step::before{
+  content:'';position:absolute;left:14px;top:30px;bottom:-10px;
+  width:1px;background:var(--bdr);
+}
+.step:last-child::before{display:none}
+.step-num{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px;z-index:1;
+}
+.step-body{flex:1;background:var(--card);border-radius:var(--rad-sm);border:1px solid var(--bdr);padding:12px 14px}
+.step-title{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px}
+.step-desc{font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:6px}
+.step-stat{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px}
+
+/* ─────────────────────────────
+   CHECKLIST
+───────────────────────────── */
+.prog-hero{
+  background:var(--g1);border-radius:var(--rad);
+  padding:14px 16px;margin-bottom:14px;
+}
+.prog-top{display:flex;justify-content:space-between;margin-bottom:7px}
+.prog-title{font-size:13px;font-weight:700;color:#fff}
+.prog-pct{font-size:13px;font-weight:700;color:#A8DBC8}
+.prog-bar-wrap{height:8px;background:rgba(255,255,255,0.25);border-radius:4px;overflow:hidden;margin-bottom:6px}
+.prog-bar-fill{height:100%;background:#A8DBC8;border-radius:4px;transition:width .4s ease}
+.prog-msg{font-size:11px;color:rgba(255,255,255,0.8)}
+
+.chk-group{background:var(--card);border-radius:var(--rad);border:1px solid var(--bdr);overflow:hidden;margin-bottom:12px}
+.chk-grp-hd{
+  padding:12px 15px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--gray2);
+}
+.chk-grp-title{font-size:13px;font-weight:700;color:var(--txt)}
+.chk-grp-cnt{font-size:12px;color:var(--txt3)}
+.chk-prog-bar{height:4px;background:var(--gray2);overflow:hidden}
+.chk-prog-fill{height:100%;background:var(--g1);transition:width .3s}
+.chk-item{display:flex;align-items:flex-start;gap:10px;padding:14px 15px;border-bottom:1px solid var(--bdr);cursor:pointer;min-height:52px}
+.chk-item:last-child{border-bottom:none}
+.chk-item input{width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:var(--g1);cursor:pointer}
+.chk-lbl{font-size:13px;color:var(--txt);line-height:1.5}
+.chk-sub{font-size:11px;color:var(--txt3);margin-top:2px}
+.chk-item.done .chk-lbl{text-decoration:line-through;color:var(--txt3)}
+
+/* ─────────────────────────────
+   ALERT PAGE
+───────────────────────────── */
+.alert-card{background:var(--card);border-radius:var(--rad);border:1px solid var(--bdr);padding:14px;margin-bottom:10px}
+.alert-title{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--txt)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bdr)}
+.toggle-row:last-child{border-bottom:none}
+.tgl-lbl{font-size:13px;color:var(--txt)}
+.tgl-sub{font-size:11px;color:var(--txt3);margin-top:1px}
+.tgl{position:relative;width:44px;height:26px;flex-shrink:0}
+.tgl input{opacity:0;width:0;height:0}
+.tgl-sl{position:absolute;inset:0;background:#ccc;border-radius:26px;transition:.2s;cursor:pointer}
+.tgl-sl::before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tgl input:checked+.tgl-sl{background:var(--g1)}
+.tgl input:checked+.tgl-sl::before{transform:translateX(18px)}
+
+.info-box{
+  background:var(--g3);border-radius:var(--rad);padding:14px;margin-bottom:12px;
+  border-left:4px solid var(--g1);
+}
+.info-box-title{font-size:13px;font-weight:700;color:var(--g1);margin-bottom:5px}
+.info-box-body{font-size:12px;color:#1a5c45;line-height:1.75}
+
+/* ─────────────────────────────
+   BOTTOM NAV
+───────────────────────────── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(var(--tab-h) + env(safe-area-inset-bottom,0px));
+  background:var(--card);border-top:1px solid var(--bdr);
+  display:flex;z-index:300;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.tab-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;font-size:10px;font-weight:500;
+  color:var(--txt3);border:none;background:none;cursor:pointer;
+  padding:8px 2px;transition:color .18s;font-family:inherit;
+}
+.tab-btn.active{color:var(--g1)}
+.tab-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab-btn{min-width:44px}
+.tab-btn .n-dot{
+  position:absolute;top:5px;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--r1);border:1.5px solid var(--card);
+}
+
+/* ─────────────────────────────
+   PAGE visibility
+───────────────────────────── */
+.page{display:none}
+.page.active{display:block}
+
+/* ─────────────────────────────
+   UTILS
+───────────────────────────── */
+.dday-warn{font-weight:700;color:var(--r1)}
+.dday-ok{font-weight:700;color:var(--g1)}
+.sep{border:none;border-top:1px solid var(--bdr);margin:14px 0}
+.empty{text-align:center;padding:40px 20px;color:var(--txt3);font-size:14px}
+
+@media(max-width:519px){
+  /* 스마트폰: 전체 너비 */
+  .page,.tiles-wrap{width:100%}
+}
+@media(min-width:520px){
+  /* PC/태블릿: 650px 고정 (기존 500px × 130%) */
+  .page{max-width:650px;margin:0 auto}
+  .tiles-wrap{max-width:650px;margin:0 auto}
+  .hero{padding-left:max(18px, calc(50% - 307px));padding-right:max(18px, calc(50% - 307px))}
+  .bottom-nav{max-width:650px;left:50%;transform:translateX(-50%)}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════
+     HERO
+══════════════════════════ -->
+<div class="hero">
+  <!-- decorative circles already done via ::before/::after -->
+  <!-- leaf deco -->
+  <div class="hero-deco">
+    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 72 C20 72 8 56 8 40 C8 20 28 8 40 8 C52 8 72 20 72 40 C72 56 60 72 40 72Z"/>
+      <path d="M40 8 Q55 30 40 72" stroke="rgba(0,0,0,0.15)" stroke-width="1.5" fill="none"/>
+      <path d="M40 8 Q25 30 40 72" stroke="rgba(0,0,0,0.15)" stroke-width="1.5" fill="none"/>
+    </svg>
+  </div>
+
+  <!-- 타이틀: 요청대로 "케마협 사업추진 관련 / 취합정보현황", 기존 대비 130% -->
+  <h1 class="hero-title" style="font-size:26px;line-height:1.25;letter-spacing:-.03em;margin-bottom:10px">
+    케마협 사업추진 관련<br>
+    <span style="color:#A8DBC8;font-size:28px">취합정보현황</span>
+  </h1>
+
+  <div class="hero-timestamp" id="ts-badge">
+    <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span id="ts-text">로딩 중...</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     SUMMARY TILES
+══════════════════════════ -->
+<div class="tiles-wrap">
+
+  <div class="tile" id="tile-open" onclick="togglePanel('open')" style="border-color:var(--g1)">
+    <div class="tile-icon" style="color:var(--g1)">
+      <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </div>
+    <div class="tile-num" style="color:var(--g1)">3</div>
+    <div class="tile-lbl">즉시행동</div>
+  </div>
+
+  <div class="tile" id="tile-prep" onclick="togglePanel('prep')" style="border-color:var(--b1)">
+    <div class="tile-icon" style="color:var(--b1)">
+      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </div>
+    <div class="tile-num" style="color:var(--b1)">4</div>
+    <div class="tile-lbl">준비중</div>
+  </div>
+
+  <div class="tile" id="tile-watch" onclick="togglePanel('watch')" style="border-color:var(--a1)">
+    <div class="tile-icon" style="color:var(--a1)">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+    <div class="tile-num" style="color:var(--a1)">3</div>
+    <div class="tile-lbl">모니터링</div>
+  </div>
+
+  <div class="tile" id="tile-esg" onclick="togglePanel('esg')" style="border-color:var(--p1)">
+    <div class="tile-icon" style="color:var(--p1)">
+      <svg viewBox="0 0 24 24"><path d="M3 21h18M3 7v1a3 3 0 006 0V7M9 7v1a3 3 0 006 0V7M15 7v1a3 3 0 006 0V7M4 21V7l8-4 8 4v14"/></svg>
+    </div>
+    <div class="tile-num" style="color:var(--p1)">8</div>
+    <div class="tile-lbl">ESG기업</div>
+    <div class="tile-badge">!</div>
+  </div>
+
+</div>
+
+<!-- 펼침 패널 -->
+<div class="tile-panel" id="panel-open">
+  <div class="panel-header">
+    <span class="panel-header-title" style="color:var(--g1)">⚡ 즉시 행동 — 접수중 3건</span>
+    <button class="panel-close" onclick="closePanel('open')">×</button>
+  </div>
+  <div class="panel-list">
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--g1)"></div>
+      <div class="pi-body">
+        <p class="pi-name">제5차 치매관리종합계획 가족지원</p>
+        <p class="pi-sub">보건복지부 · 2026~2030 · 접근성 95점</p>
+      </div>
+      <span class="pi-badge" style="background:var(--g3);color:var(--g1)">접수중</span>
+    </div>
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--g2)"></div>
+      <div class="pi-body">
+        <p class="pi-name">행안부 사회연대경제 혁신모델</p>
+        <p class="pi-sub">118억 신규편성 · 접근성 88점</p>
+      </div>
+      <span class="pi-badge" style="background:var(--g3);color:var(--g1)">접수중</span>
+    </div>
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--b1)"></div>
+      <div class="pi-body">
+        <p class="pi-name">사회서비스 취약지 공모 — 시범파트너</p>
+        <p class="pi-sub">보건복지부 · 접근성 82점</p>
+      </div>
+      <span class="pi-badge" style="background:var(--g3);color:var(--g1)">접수중</span>
+    </div>
+  </div>
+</div>
+
+<div class="tile-panel" id="panel-prep">
+  <div class="panel-header">
+    <span class="panel-header-title" style="color:var(--b1)">📋 준비중 — 3개월 내 제안서 4건</span>
+    <button class="panel-close" onclick="closePanel('prep')">×</button>
+  </div>
+  <div class="panel-list">
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--a1)"></div>
+      <div class="pi-body"><p class="pi-name">사랑의열매 전국단위Ⅱ (2027년 공모)</p><p class="pi-sub">설립 7년 이하 신청가능 · 1억 이내</p></div>
+      <span class="pi-badge" style="background:var(--b2);color:var(--b1)">준비중</span>
+    </div>
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--a1)"></div>
+      <div class="pi-body"><p class="pi-name">지자체 통합돌봄 위탁계약</p><p class="pi-sub">9월 전 각인 필수 · 914억 예산</p></div>
+      <span class="pi-badge" style="background:var(--b2);color:var(--b1)">준비중</span>
+    </div>
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--b1)"></div>
+      <div class="pi-body"><p class="pi-name">보건복지인재원 교육과정 신설 제안</p><p class="pi-sub">즉시 제출 가능 · 클래스리더 양성</p></div>
+      <span class="pi-badge" style="background:var(--b2);color:var(--b1)">준비중</span>
+    </div>
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--p1)"></div>
+      <div class="pi-body"><p class="pi-name">사랑의열매 전국단위Ⅰ (2027년)</p><p class="pi-sub">기관당 최대 2억 · 7~8월 공모 예상</p></div>
+      <span class="pi-badge" style="background:var(--b2);color:var(--b1)">준비중</span>
+    </div>
+  </div>
+</div>
+
+<div class="tile-panel" id="panel-watch">
+  <div class="panel-header">
+    <span class="panel-header-title" style="color:var(--a1)">👁 모니터링 — 지속 추적 3건</span>
+    <button class="panel-close" onclick="closePanel('watch')">×</button>
+  </div>
+  <div class="panel-list">
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--gray)"></div>
+      <div class="pi-body"><p class="pi-name">통합돌봄 표준목록 편입 제안</p><p class="pi-sub">보건복지부 · 연구 착수 선행 필요</p></div>
+      <span class="pi-badge" style="background:var(--a2);color:var(--a1)">장기</span>
+    </div>
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--gray)"></div>
+      <div class="pi-body"><p class="pi-name">복권기금 취약계층 지원사업</p><p class="pi-sub">사랑의열매 · 조건 확인 필요</p></div>
+      <span class="pi-badge" style="background:var(--a2);color:var(--a1)">조건확인</span>
+    </div>
+    <div class="panel-item">
+      <div class="pi-dot" style="background:var(--p1)"></div>
+      <div class="pi-body"><p class="pi-name">ESG 기업 후원계약 — 한화생명·건보공단</p><p class="pi-sub">목표: 3개월 내 계약 1호</p></div>
+      <span class="pi-badge" style="background:var(--a2);color:var(--a1)">진행중</span>
+    </div>
+  </div>
+</div>
+
+<div class="tile-panel" id="panel-esg">
+  <div class="panel-header">
+    <span class="panel-header-title" style="color:var(--p1)">🏢 ESG 기업 타깃 — 접근성 순위</span>
+    <button class="panel-close" onclick="closePanel('esg')">×</button>
+  </div>
+  <div class="panel-list">
+    <div class="panel-item"><div class="pi-dot" style="background:var(--g1)"></div><div class="pi-body"><p class="pi-name">1위 한화생명</p><p class="pi-sub">가족돌봄 사회공헌 운영 중 · ★★★★★</p></div><span class="pi-badge" style="background:var(--g3);color:var(--g1)">최우선</span></div>
+    <div class="panel-item"><div class="pi-dot" style="background:var(--g2)"></div><div class="pi-body"><p class="pi-name">2위 국민건강보험공단</p><p class="pi-sub">장기요양 수급자 가족 완전 일치 · ★★★★</p></div><span class="pi-badge" style="background:var(--g3);color:var(--g1)">우선</span></div>
+    <div class="panel-item"><div class="pi-dot" style="background:var(--b1)"></div><div class="pi-body"><p class="pi-name">3위 유한킴벌리</p><p class="pi-sub">시니어케어 고객 = 돌봄 제공자 · ★★★</p></div><span class="pi-badge" style="background:var(--b2);color:var(--b1)">2순위</span></div>
+    <div class="panel-item"><div class="pi-dot" style="background:var(--b1)"></div><div class="pi-body"><p class="pi-name">4위 삼성생명</p><p class="pi-sub">전성기 플랫폼 · 장기요양 고객 · ★★★</p></div><span class="pi-badge" style="background:var(--b2);color:var(--b1)">2순위</span></div>
+    <div class="panel-item"><div class="pi-dot" style="background:var(--b1)"></div><div class="pi-body"><p class="pi-name">5위 아모레퍼시픽</p><p class="pi-sub">여성 건강 ESG · 돌봄제공 여성 73% · ★★★</p></div><span class="pi-badge" style="background:var(--b2);color:var(--b1)">2순위</span></div>
+    <div class="panel-item"><div class="pi-dot" style="background:var(--a1)"></div><div class="pi-body"><p class="pi-name">6위 SK텔레콤</p><p class="pi-sub">SKTCH for Good · 돌봄 ESG 설정 · ★★</p></div><span class="pi-badge" style="background:var(--a2);color:var(--a1)">3순위</span></div>
+    <div class="panel-item"><div class="pi-dot" style="background:var(--a1)"></div><div class="pi-body"><p class="pi-name">7위 현대차그룹</p><p class="pi-sub">임직원 복리후생 모델 · 의사결정 복잡 · ★★</p></div><span class="pi-badge" style="background:var(--a2);color:var(--a1)">3순위</span></div>
+    <div class="panel-item"><div class="pi-dot" style="background:var(--gray)"></div><div class="pi-body"><p class="pi-name">8위 롯데그룹</p><p class="pi-sub">전국 복지관 네트워크 · 실적 후 접촉 · ★★</p></div><span class="pi-badge" style="background:var(--gray2);color:var(--gray)">장기</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     PAGE: 공모 대시보드
+══════════════════════════ -->
+<div class="page active content-area" id="page-dashboard">
+
+  <div class="filter-scroll">
+    <button class="f-btn on" onclick="flt('all',this)">전체</button>
+    <button class="f-btn" onclick="flt('open',this)">접수중</button>
+    <button class="f-btn" onclick="flt('prep',this)">준비중</button>
+    <button class="f-btn" onclick="flt('watch',this)">모니터링</button>
+    <button class="f-btn" onclick="flt('care',this)">가족돌봄</button>
+    <button class="f-btn" onclick="flt('mental',this)">정신건강</button>
+    <button class="f-btn" onclick="flt('welfare',this)">사회복지</button>
+  </div>
+
+  <div class="sec-label"><span class="sec-dot" style="background:var(--g1)"></span>긴급 — 즉시 행동 필요</div>
+
+  <div class="card" data-s="open" data-c="care welfare">
+    <div class="card-accent" style="background:var(--g1)"></div>
+    <div class="card-body">
+      <div class="pri-chip" style="background:var(--g3);color:var(--g1)">★ 우선순위 1위 · 접근성 95점</div>
+      <div class="card-top">
+        <p class="card-title">제5차 치매관리종합계획<br>가족지원 서비스 다양화</p>
+        <span class="status-pill s-open">접수중</span>
+      </div>
+      <p class="card-org">보건복지부 · 중앙치매센터 / 전국 256개 치매안심센터</p>
+      <div class="tag-row">
+        <span class="tag" style="background:var(--g3);color:var(--g1)">가족돌봄</span>
+        <span class="tag" style="background:var(--g3);color:var(--g1)">치매가족</span>
+        <span class="tag" style="background:var(--b2);color:var(--b1)">2026~2030 5개년</span>
+      </div>
+      <div class="card-meta">
+        <div class="meta-row"><span class="meta-icon">📅</span><span>2026년 첫 시행 — 파트너 발굴 진행 중</span></div>
+        <div class="meta-row"><span class="meta-icon">📍</span><span>전국 256개 치매안심센터</span></div>
+        <div class="meta-row"><span class="meta-icon">⚠️</span><span class="dday-warn">올해 접촉이 파트너 선정 핵심 타이밍</span></div>
+      </div>
+      <div class="score-wrap">
+        <div class="score-row"><span class="score-lbl">신청가능</span><div class="score-track"><div class="score-fill" style="width:95%;background:var(--g1)"></div></div><span class="score-val">95</span></div>
+        <div class="score-row"><span class="score-lbl">마감긴박</span><div class="score-track"><div class="score-fill" style="width:90%;background:var(--g2)"></div></div><span class="score-val">90</span></div>
+        <div class="score-row"><span class="score-lbl">PTC적합</span><div class="score-track"><div class="score-fill" style="width:98%;background:var(--g1)"></div></div><span class="score-val">98</span></div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div><p class="foot-lbl">포지셔닝</p><p class="foot-val">정서지원 패키지 공급기관 등록</p></div>
+      <a class="ext-btn" href="https://ansim.nid.or.kr" target="_blank" rel="noopener noreferrer">바로가기 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-s="open" data-c="care welfare">
+    <div class="card-accent" style="background:var(--g2)"></div>
+    <div class="card-body">
+      <div class="pri-chip" style="background:var(--g3);color:var(--g1)">★ 우선순위 2위 · 접근성 88점</div>
+      <div class="card-top">
+        <p class="card-title">행안부 사회연대경제<br>혁신모델 발굴 및 확산</p>
+        <span class="status-pill s-open">접수중</span>
+      </div>
+      <p class="card-org">행정안전부 — 2026년 신규 118억 원 편성</p>
+      <div class="tag-row">
+        <span class="tag" style="background:var(--b2);color:var(--b1)">사회적협동조합</span>
+        <span class="tag" style="background:var(--g3);color:var(--g1)">가족돌봄</span>
+        <span class="tag" style="background:var(--p2);color:var(--p1)">지역문제해결</span>
+      </div>
+      <div class="card-meta">
+        <div class="meta-row"><span class="meta-icon">📅</span><span>2026년 상반기 공고 예정</span></div>
+        <div class="meta-row"><span class="meta-icon">💰</span><span>총 118억 원</span></div>
+        <div class="meta-row"><span class="meta-icon">⚠️</span><span class="dday-warn">공고 즉시 확인 — 지금 모니터링 착수</span></div>
+      </div>
+      <div class="score-wrap">
+        <div class="score-row"><span class="score-lbl">신청가능</span><div class="score-track"><div class="score-fill" style="width:88%;background:var(--g1)"></div></div><span class="score-val">88</span></div>
+        <div class="score-row"><span class="score-lbl">마감긴박</span><div class="score-track"><div class="score-fill" style="width:85%;background:var(--g2)"></div></div><span class="score-val">85</span></div>
+        <div class="score-row"><span class="score-lbl">PTC적합</span><div class="score-track"><div class="score-fill" style="width:80%;background:var(--b1)"></div></div><span class="score-val">80</span></div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div><p class="foot-lbl">PTC 포지셔닝</p><p class="foot-val">지역 돌봄공백 해소 사회연대경제 모델</p></div>
+      <a class="ext-btn" href="https://www.mois.go.kr" target="_blank" rel="noopener noreferrer">바로가기 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-s="open" data-c="care welfare">
+    <div class="card-accent" style="background:var(--b1)"></div>
+    <div class="card-body">
+      <div class="pri-chip" style="background:var(--b2);color:var(--b1)">★ 우선순위 3위 · 접근성 82점</div>
+      <div class="card-top">
+        <p class="card-title">사회서비스 취약지 공모<br>시범파트너 접촉</p>
+        <span class="status-pill s-open">접수중</span>
+      </div>
+      <p class="card-org">보건복지부 사회서비스사업과 (044-202-3222)</p>
+      <div class="tag-row">
+        <span class="tag" style="background:var(--g3);color:var(--g1)">통합돌봄</span>
+        <span class="tag" style="background:var(--g3);color:var(--g1)">취약지 특화</span>
+      </div>
+      <div class="card-meta">
+        <div class="meta-row"><span class="meta-icon">📅</span><span>2026년 시행 중</span></div>
+        <div class="meta-row"><span class="meta-icon">📍</span><span>인천·강원·충남·전북·전남·제주</span></div>
+        <div class="meta-row"><span class="meta-icon">💡</span><span class="dday-ok">올해 접촉 → 2027년 공급기관 등록</span></div>
+      </div>
+      <div class="score-wrap">
+        <div class="score-row"><span class="score-lbl">신청가능</span><div class="score-track"><div class="score-fill" style="width:82%;background:var(--b1)"></div></div><span class="score-val">82</span></div>
+        <div class="score-row"><span class="score-lbl">마감긴박</span><div class="score-track"><div class="score-fill" style="width:75%;background:var(--b1)"></div></div><span class="score-val">75</span></div>
+        <div class="score-row"><span class="score-lbl">PTC적합</span><div class="score-track"><div class="score-fill" style="width:85%;background:var(--g1)"></div></div><span class="score-val">85</span></div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div><p class="foot-lbl">전략</p><p class="foot-val">올해 시범파트너 → 2027년 등록</p></div>
+      <a class="ext-btn" href="https://www.mohw.go.kr" target="_blank" rel="noopener noreferrer">바로가기 →</a>
+    </div>
+  </div>
+
+  <div class="sec-label"><span class="sec-dot" style="background:var(--b1)"></span>준비 착수 — 3개월 내 제안서</div>
+
+  <div class="card" data-s="prep" data-c="care mental welfare">
+    <div class="card-accent" style="background:var(--a1)"></div>
+    <div class="card-body">
+      <div class="card-top"><p class="card-title">사랑의열매 전국단위Ⅱ<br>창의적 해결방안 (2027년)</p><span class="status-pill s-prep">준비중</span></div>
+      <p class="card-org">사회복지공동모금회 — 설립 7년 이하 신청가능 ✓</p>
+      <div class="tag-row"><span class="tag" style="background:var(--g3);color:var(--g1)">케마협 신청가능</span><span class="tag" style="background:var(--p2);color:var(--p1)">정신건강</span><span class="tag" style="background:var(--r2);color:var(--r1)">2026.12 마감완료</span></div>
+      <div class="card-meta"><div class="meta-row"><span class="meta-icon">📅</span><span>2027년 공모 예상: 2026년 11월</span></div><div class="meta-row"><span class="meta-icon">💰</span><span>기관당 최대 1억 원</span></div><div class="meta-row"><span class="meta-icon">⏱</span><span class="dday-warn">준비기간 약 5개월 — 즉시 착수</span></div></div>
+    </div>
+    <div class="card-foot"><div><p class="foot-lbl">즉시 착수 항목</p><p class="foot-val">사업설계서 + 정량데이터 구축</p></div><a class="ext-btn" href="https://www.chest.or.kr" target="_blank" rel="noopener noreferrer">바로가기 →</a></div>
+  </div>
+
+  <div class="card" data-s="prep" data-c="care welfare">
+    <div class="card-accent" style="background:var(--a1)"></div>
+    <div class="card-body">
+      <div class="card-top"><p class="card-title">지자체 통합돌봄<br>지역특화서비스 위탁계약</p><span class="status-pill s-prep">준비중</span></div>
+      <p class="card-org">시군구 통합돌봄 전담팀 — 치매안심센터 경유</p>
+      <div class="tag-row"><span class="tag" style="background:var(--g3);color:var(--g1)">가족돌봄</span><span class="tag" style="background:var(--a2);color:var(--a1)">B2G 위탁</span><span class="tag" style="background:var(--r2);color:var(--r1)">9월 전 각인 필수</span></div>
+      <div class="card-meta"><div class="meta-row"><span class="meta-icon">📅</span><span>지자체 예산편성: 매년 9~11월</span></div><div class="meta-row"><span class="meta-icon">💰</span><span>통합돌봄 예산 914억 (지역서비스 620억)</span></div></div>
+    </div>
+    <div class="card-foot"><div><p class="foot-lbl">경로</p><p class="foot-val">치매안심센터 → 시군구 → 위탁계약</p></div><a class="ext-btn" href="https://www.mohw.go.kr" target="_blank" rel="noopener noreferrer">바로가기 →</a></div>
+  </div>
+
+  <div class="card" data-s="prep" data-c="care welfare">
+    <div class="card-accent" style="background:var(--b1)"></div>
+    <div class="card-body">
+      <div class="card-top"><p class="card-title">보건복지인재원<br>통합돌봄 교육과정 신설 제안</p><span class="status-pill s-prep">준비중</span></div>
+      <p class="card-org">한국보건복지인재원 교육개발팀</p>
+      <div class="tag-row"><span class="tag" style="background:var(--g3);color:var(--g1)">요양보호사</span><span class="tag" style="background:var(--b2);color:var(--b1)">PTC 공인 커리큘럼</span></div>
+      <div class="card-meta"><div class="meta-row"><span class="meta-icon">📅</span><span>제안서 즉시 제출 가능</span></div><div class="meta-row"><span class="meta-icon">⏱</span><span>채택까지 6~12개월 예상</span></div></div>
+    </div>
+    <div class="card-foot"><div><p class="foot-lbl">효과</p><p class="foot-val">인재원 예산으로 클래스리더 양성 가능</p></div><a class="ext-btn" href="https://www.kohi.or.kr" target="_blank" rel="noopener noreferrer">바로가기 →</a></div>
+  </div>
+
+  <div class="card" data-s="prep" data-c="mental welfare">
+    <div class="card-accent" style="background:var(--p1)"></div>
+    <div class="card-body">
+      <div class="card-top"><p class="card-title">사랑의열매 전국단위Ⅰ<br>일반 프로그램 (2027년)</p><span class="status-pill s-prep">준비중</span></div>
+      <p class="card-org">사회복지공동모금회 (매년 7~8월 공모)</p>
+      <div class="tag-row"><span class="tag" style="background:var(--p2);color:var(--p1)">정신건강</span><span class="tag" style="background:var(--g3);color:var(--g1)">돌봄 종사자</span></div>
+      <div class="card-meta"><div class="meta-row"><span class="meta-icon">📅</span><span>2027년 공모: 2026년 7~8월 예상</span></div><div class="meta-row"><span class="meta-icon">💰</span><span>기관당 최대 2억 원 (1년)</span></div></div>
+    </div>
+    <div class="card-foot"><div><p class="foot-lbl">신청</p><p class="foot-val">proposal.chest.or.kr</p></div><a class="ext-btn" href="https://proposal.chest.or.kr" target="_blank" rel="noopener noreferrer">바로가기 →</a></div>
+  </div>
+
+  <div class="sec-label"><span class="sec-dot" style="background:var(--a1)"></span>모니터링 — 지속 추적</div>
+
+  <div class="card" data-s="watch" data-c="care welfare">
+    <div class="card-accent" style="background:var(--gray)"></div>
+    <div class="card-body">
+      <div class="card-top"><p class="card-title">통합돌봄 서비스 표준목록 편입</p><span class="status-pill s-watch">장기목표</span></div>
+      <p class="card-org">보건복지부 의료요양돌봄통합지원단</p>
+      <div class="tag-row"><span class="tag" style="background:var(--g3);color:var(--g1)">가족돌봄</span><span class="tag" style="background:var(--gray2);color:var(--gray)">제도화</span></div>
+      <div class="card-meta"><div class="meta-row"><span class="meta-icon">📅</span><span>연구 착수 → 3~9개월 → 정책 제안</span></div></div>
+    </div>
+    <div class="card-foot"><div><p class="foot-lbl">선행조건</p><p class="foot-val">국내 효과연구 데이터 필수</p></div><a class="ext-btn" href="https://www.mohw.go.kr" target="_blank" rel="noopener noreferrer">바로가기 →</a></div>
+  </div>
+
+  <div class="card" data-s="watch" data-c="mental welfare">
+    <div class="card-accent" style="background:var(--gray)"></div>
+    <div class="card-body">
+      <div class="card-top"><p class="card-title">복권기금 취약계층 지원사업</p><span class="status-pill s-watch">조건확인</span></div>
+      <p class="card-org">사회복지공동모금회 (연간 공모)</p>
+      <div class="tag-row"><span class="tag" style="background:var(--p2);color:var(--p1)">정신건강</span><span class="tag" style="background:var(--g3);color:var(--g1)">취약계층</span></div>
+      <div class="card-meta"><div class="meta-row"><span class="meta-icon">📅</span><span>연간 공모 — 별도 조건 확인 필요</span></div></div>
+    </div>
+    <div class="card-foot"><div><p class="foot-lbl">상태</p><p class="foot-val">신청자격 조건 사전 확인 필수</p></div><a class="ext-btn" href="https://www.chest.or.kr" target="_blank" rel="noopener noreferrer">바로가기 →</a></div>
+  </div>
+
+  <div class="card" data-s="watch" data-c="care mental">
+    <div class="card-accent" style="background:var(--p1)"></div>
+    <div class="card-body">
+      <div class="card-top"><p class="card-title">ESG 기업 후원계약<br>한화생명 · 건보공단</p><span class="status-pill s-watch">진행중</span></div>
+      <p class="card-org">한화생명 사회공헌팀 / 건보공단 장기요양보험운영실</p>
+      <div class="tag-row"><span class="tag" style="background:var(--g3);color:var(--g1)">ESG 사회</span><span class="tag" style="background:var(--g3);color:var(--g1)">지정기부금</span></div>
+      <div class="card-meta"><div class="meta-row"><span class="meta-icon">📅</span><span>목표: 3개월 내 계약 1호</span></div><div class="meta-row"><span class="meta-icon">💰</span><span>법인세 손금산입 혜택 제공 가능</span></div></div>
+    </div>
+    <div class="card-foot"><div><p class="foot-lbl">선행조건</p><p class="foot-val">정량 성과 데이터 + 맞춤 제안서</p></div><button class="ext-btn" onclick="showTab('esg')">ESG 상세 →</button></div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<!-- ══════════════════════════ ESG ══ -->
+<div class="page content-area" id="page-esg">
+  <div class="info-box"><p class="info-box-title">ESG 기업 접촉 순서 전략</p><p class="info-box-body">한화생명 우선 체결 → 건보공단 레퍼런스 활용 → 3~8순위 순차 확장<br>법인세 손금산입(과세소득 10% 한도) 혜택을 모든 제안서에 반드시 포함</p></div>
+  <div class="sec-label"><span class="sec-dot" style="background:var(--g1)"></span>최우선 타깃</div>
+  <div class="esg-card"><div class="esg-head"><div class="esg-rank" style="background:var(--g1);color:#fff">1</div><div><p class="esg-name">한화생명</p><p class="esg-sub">생명보험 · 가족돌봄 사회공헌 운영 중</p></div></div><div class="stars">★★★★★</div><div class="acc-track"><div class="acc-fill" style="width:95%;background:var(--g1)"></div></div><p class="esg-desc">가족돌봄청년 지원을 이미 핵심 사회공헌으로 운영 중. PTC는 현행 사업의 심화 버전 — 신규 설득 불필요, 파트너 확장 제안으로 접근.</p><div class="tag-row"><span class="tag" style="background:var(--g3);color:var(--g1)">신규설득 불필요</span><span class="tag" style="background:var(--b2);color:var(--b1)">파트너 확장 제안</span></div><div class="ch-box">📞 접촉: 한화생명 사회공헌팀 — 협력기관 공식 신청<br>🎯 ESG: S(사회) — 가족돌봄·취약계층·직원가족 웰빙 3항목 동시 해당</div></div>
+  <div class="esg-card"><div class="esg-head"><div class="esg-rank" style="background:var(--g2);color:#fff">2</div><div><p class="esg-name">국민건강보험공단</p><p class="esg-sub">준정부기관 · 장기요양 전문기관</p></div></div><div class="stars">★★★★☆</div><div class="acc-track"><div class="acc-fill" style="width:80%;background:var(--g2)"></div></div><p class="esg-desc">장기요양 수급자 가족 = PTC 핵심 타깃 완전 일치. 관계망 미약 → 본사보다 강북·강동 지역본부 먼저 접촉.</p><div class="ch-box">📞 접촉: 건보공단 강북·강동 지역본부 사회공헌 담당<br>🎯 전략: 한화생명 체결 후 레퍼런스 활용 접근</div></div>
+  <div class="sec-label"><span class="sec-dot" style="background:var(--b1)"></span>2순위 타깃</div>
+  <div class="esg-card"><div class="esg-head"><div class="esg-rank" style="background:var(--b1);color:#fff">3</div><div><p class="esg-name">유한킴벌리</p><p class="esg-sub">시니어케어 고객 = 돌봄 제공자</p></div></div><div class="stars">★★★☆☆</div><div class="acc-track"><div class="acc-fill" style="width:72%;background:var(--b1)"></div></div><p class="esg-desc">"우리 고객(돌봄 제공자)을 돌보는 프로그램" 포지셔닝으로 브랜드 신뢰도와 직결.</p><div class="ch-box">📞 접촉: 유한킴벌리 사회공헌팀 / 우리강산 푸르게 재단</div></div>
+  <div class="esg-card"><div class="esg-head"><div class="esg-rank" style="background:var(--b1);color:#fff">4</div><div><p class="esg-name">삼성생명</p><p class="esg-sub">전성기(50+) 플랫폼 · 기납품 실적 존재</p></div></div><div class="stars">★★★☆☆</div><div class="acc-track"><div class="acc-fill" style="width:65%;background:var(--b1)"></div></div><p class="esg-desc">전성기 플랫폼에서 PTC 유료 운영 실적 존재. 기업 복지 프로그램 모델로 접근.</p><div class="ch-box">📞 접촉: 삼성생명공익재단 / 전성기 플랫폼 담당자</div></div>
+  <div class="esg-card"><div class="esg-head"><div class="esg-rank" style="background:var(--b1);color:#fff">5</div><div><p class="esg-name">아모레퍼시픽</p><p class="esg-sub">여성 건강 ESG · 돌봄제공 여성 73%</p></div></div><div class="stars">★★★☆☆</div><div class="acc-track"><div class="acc-fill" style="width:58%;background:var(--b1)"></div></div><p class="esg-desc">여성 건강 ESG 프레임에 돌봄 제공 여성 정신건강 지원으로 자연스럽게 연결.</p><div class="ch-box">📞 접촉: 아모레퍼시픽재단 / 해피배스데이 사회공헌 파트너</div></div>
+  <div class="sec-label"><span class="sec-dot" style="background:var(--a1)"></span>3순위 타깃 — 실적 후 접촉</div>
+  <div class="esg-card"><div class="esg-head"><div class="esg-rank" style="background:var(--a1);color:#fff">6</div><div><p class="esg-name">SK텔레콤</p><p class="esg-sub">SKTCH for Good · 돌봄 ESG 과제 설정</p></div></div><div class="stars">★★☆☆☆</div><div class="acc-track"><div class="acc-fill" style="width:45%;background:var(--a1)"></div></div><p class="esg-desc">SKT AI 기술 + PTC 콘텐츠 결합 온라인 플랫폼 협력 제안.</p><div class="ch-box">📞 접촉: SKT 사회공헌재단 / 행복얼라이언스 파트너기관</div></div>
+  <div class="esg-card"><div class="esg-head"><div class="esg-rank" style="background:var(--a1);color:#fff">7</div><div><p class="esg-name">현대차그룹 (현대모비스)</p><p class="esg-sub">임직원 부모 돌봄 복리후생 모델</p></div></div><div class="stars">★★☆☆☆</div><div class="acc-track"><div class="acc-fill" style="width:35%;background:var(--a1)"></div></div><p class="esg-desc">임직원 복리후생 PTC — 직원복지(S) + 생산성(G) 이중 효과. 의사결정 복잡.</p><div class="ch-box">📞 접촉: 현대차그룹 사회문화재단 / 현대모비스 사회공헌팀</div></div>
+  <div class="esg-card"><div class="esg-head"><div class="esg-rank" style="background:var(--gray);color:#fff">8</div><div><p class="esg-name">롯데그룹 (롯데복지재단)</p><p class="esg-sub">전국 노인복지관 네트워크 보유</p></div></div><div class="stars">★★☆☆☆</div><div class="acc-track"><div class="acc-fill" style="width:28%;background:var(--gray)"></div></div><p class="esg-desc">전국 노인복지관 지원 네트워크 = PTC 운영 거점 가능. 실적 축적 후 접촉.</p><div class="ch-box">📞 접촉: 롯데복지재단 / 롯데월드 사회공헌팀</div></div>
+</div>
+
+<!-- ══════════════════════════ POLICY ══ -->
+<div class="page content-area" id="page-policy">
+  <div class="info-box"><p class="info-box-title">B2G 진입 경로 — 6단계</p><p class="info-box-body">치매안심센터 → 보건복지부 공문 → 시군구 협의체 → 인재원 협력 → 표준목록 편입 → 정책위원회 참여 순서로 진행합니다.</p></div>
+  <div class="step"><div class="step-num" style="background:var(--a1);color:#fff">1</div><div class="step-body"><p class="step-title">치매안심센터 관계 형성</p><p class="step-desc">기존 강사 파견 실적 센터 특정 → 센터장 레벨 접촉 → 시군구 간접 제안 경로 확보</p><span class="step-stat" style="background:var(--a2);color:var(--a1)">진행중 — 거점 1곳 특정 필요</span></div></div>
+  <div class="step"><div class="step-num" style="background:var(--r1);color:#fff">2</div><div class="step-body"><p class="step-title">보건복지부 공문 발송</p><p class="step-desc">의료요양돌봄통합지원단 앞 / 정책 제안 + 케마협 공식 소개 + PTC 근거 첨부. 비용·리스크 제로의 정책 노출 수단.</p><span class="step-stat" style="background:var(--r2);color:var(--r1)">미착수 — 1개월 내 발송 필요</span></div></div>
+  <div class="step"><div class="step-num" style="background:var(--r1);color:#fff">3</div><div class="step-body"><p class="step-title">시군구 통합지원협의체 참여 신청</p><p class="step-desc">2~3개 시군구 선택 집중 / "근거 기반 가족돌봄 전문기관" 포지셔닝 공문 + 납품 실적 데이터 필수</p><span class="step-stat" style="background:var(--r2);color:var(--r1)">미착수 — 데이터 정량화 선행</span></div></div>
+  <div class="step"><div class="step-num" style="background:var(--a1);color:#fff">4</div><div class="step-body"><p class="step-title">보건복지인재원 교육과정 채택 제안</p><p class="step-desc">개발비용 없음 + 한국어 커리큘럼 기존 존재 → 인재원 입장의 3가지 장점이 설득 포인트</p><span class="step-stat" style="background:var(--a2);color:var(--a1)">제안서 준비 중 — 즉시 제출 가능</span></div></div>
+  <div class="step"><div class="step-num" style="background:var(--gray);color:#fff">5</div><div class="step-body"><p class="step-title">통합돌봄 표준목록 편입 (장기)</p><p class="step-desc">국내 효과연구(한보사연/건보공단 협력) → 복지부 제출 → 표준목록 확대 논의 근거 활용</p><span class="step-stat" style="background:var(--gray2);color:var(--gray)">장기 — 연구 착수 후 9개월+ 소요</span></div></div>
+  <div class="step"><div class="step-num" style="background:var(--gray);color:#fff">6</div><div class="step-body"><p class="step-title">통합돌봄정책위원회 민간전문가 참여</p><p class="step-desc">이사장 또는 부이사장 위원 참여 목표 / 한보사연·중앙 사회서비스원 추천 방식</p><span class="step-stat" style="background:var(--gray2);color:var(--gray)">장기 — 9개월 이후 추진</span></div></div>
+</div>
+
+<!-- ══════════════════════════ CHECK ══ -->
+<div class="page content-area" id="page-check">
+  <div class="prog-hero"><div class="prog-top"><span class="prog-title">전체 실행 진행률</span><span class="prog-pct" id="prog-pct">0%</span></div><div class="prog-bar-wrap"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div><p class="prog-msg" id="prog-msg">0단계 필수 항목부터 시작하세요</p></div>
+  <div class="chk-group"><div class="chk-grp-hd"><span class="chk-grp-title">🔴 0단계 — 선행 필수 (즉시·2주 내)</span><span class="chk-grp-cnt" id="g0c">0/4</span></div><div class="chk-prog-bar"><div class="chk-prog-fill" id="g0b" style="width:0%"></div></div>
+    <label class="chk-item" id="ci0"><input type="checkbox" onchange="uc()"><div class="chk-lbl">납품 성과 데이터 정량화 (A4 1장 요약서)<div class="chk-sub">총 회차·참가자 수·만족도·효과 수치 문서화</div></div></label>
+    <label class="chk-item" id="ci1"><input type="checkbox" onchange="uc()"><div class="chk-lbl">클래스 리더 현황 파악 (20명 활동 가능 + 지역 분포)<div class="chk-sub">실제 가동 가능 인원 확인 — 계약 이행력 선제 검증</div></div></label>
+    <label class="chk-item" id="ci2"><input type="checkbox" onchange="uc()"><div class="chk-lbl">홈페이지 caregiver.co.kr 복구<div class="chk-sub">현재 응답 불가 — 대외 신뢰도 즉각 복구 필요</div></div></label>
+    <label class="chk-item" id="ci3"><input type="checkbox" onchange="uc()"><div class="chk-lbl">트랙별 담당자 1인 지정 (A·B·C 트랙)<div class="chk-sub">지정 없으면 3개 트랙 모두 반쪽짜리 실행</div></div></label>
+  </div>
+  <div class="chk-group"><div class="chk-grp-hd"><span class="chk-grp-title">🟡 1단계 — 재원 확보 (1~2개월)</span><span class="chk-grp-cnt" id="g1c">0/4</span></div><div class="chk-prog-bar"><div class="chk-prog-fill" id="g1b" style="width:0%"></div></div>
+    <label class="chk-item" id="ci4"><input type="checkbox" onchange="uc()"><div class="chk-lbl">보건복지부 공문 발송<div class="chk-sub">의료요양돌봄통합지원단 앞 / 정책 제안 + PTC 근거</div></div></label>
+    <label class="chk-item" id="ci5"><input type="checkbox" onchange="uc()"><div class="chk-lbl">한화생명 ESG 제안서 작성 및 미팅 요청<div class="chk-sub">사회공헌 협력기관 신청 — 신규 설득 불필요</div></div></label>
+    <label class="chk-item" id="ci6"><input type="checkbox" onchange="uc()"><div class="chk-lbl">치매안심센터 거점 1곳 관계 형성<div class="chk-sub">기존 강사 파견 실적 센터 특정 → 센터장 접촉</div></div></label>
+    <label class="chk-item" id="ci7"><input type="checkbox" onchange="uc()"><div class="chk-lbl">행안부 사회연대경제 공모 공고 모니터링 시작<div class="chk-sub">상반기 중 공고 예정 — 즉시 모니터링 착수</div></div></label>
+  </div>
+  <div class="chk-group"><div class="chk-grp-hd"><span class="chk-grp-title">🔵 2단계 — 거점 확보 (2~4개월)</span><span class="chk-grp-cnt" id="g2c">0/3</span></div><div class="chk-prog-bar"><div class="chk-prog-fill" id="g2b" style="width:0%"></div></div>
+    <label class="chk-item" id="ci8"><input type="checkbox" onchange="uc()"><div class="chk-lbl">보건복지인재원 협력 제안서 제출<div class="chk-sub">통합돌봄 교육과정 신설 제안 — 즉시 제출 가능</div></div></label>
+    <label class="chk-item" id="ci9"><input type="checkbox" onchange="uc()"><div class="chk-lbl">시군구 통합지원협의체 참여 신청 (2~3개소)<div class="chk-sub">납품 실적 데이터 문서 첨부 필수</div></div></label>
+    <label class="chk-item" id="ci10"><input type="checkbox" onchange="uc()"><div class="chk-lbl">ESG 기업 1개소 이상 후원계약 체결<div class="chk-sub">한화생명 목표 — 사랑의열매 2027 준비 병행</div></div></label>
+  </div>
+  <div class="chk-group"><div class="chk-grp-hd"><span class="chk-grp-title">🟢 3~4단계 — 안정화·확산 (4개월+)</span><span class="chk-grp-cnt" id="g3c">0/3</span></div><div class="chk-prog-bar"><div class="chk-prog-fill" id="g3b" style="width:0%"></div></div>
+    <label class="chk-item" id="ci11"><input type="checkbox" onchange="uc()"><div class="chk-lbl">위탁계약 또는 사회서비스원 특화서비스 등록<div class="chk-sub">안정 재원 1호 확보</div></div></label>
+    <label class="chk-item" id="ci12"><input type="checkbox" onchange="uc()"><div class="chk-lbl">국내 PTC 효과 연구 착수<div class="chk-sub">한보사연 또는 건보공단 협력</div></div></label>
+    <label class="chk-item" id="ci13"><input type="checkbox" onchange="uc()"><div class="chk-lbl">성과 보고서 → 타 지자체 확산 제안<div class="chk-sub">복제 가능한 모델 완성 → 추가 ESG 기업 2~3개 확장</div></div></label>
+  </div>
+</div>
+
+<!-- ══════════════════════════ ALERT ══ -->
+<div class="page content-area" id="page-alert">
+  <div class="info-box"><p class="info-box-title">⟳ Google Sheets 자동 갱신 연동 완료</p><p class="info-box-body">매일 17:00 자동 수집 · 중앙치매센터 외 6개 사이트 모니터링 중<br>ESG기업 뉴스 5개사 실시간 수집 · 마감 D-7/D-3/D-1 이메일 알림</p></div>
+  <div class="sec-label"><span class="sec-dot" style="background:var(--r1)"></span>즉시 확인 사이트</div>
+  <div class="alert-card">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <a href="https://www.mois.go.kr/frt/bbs/type013/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000006&nttId=123661" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none;padding:8px 2px;min-height:52px"><div><p style="font-size:13px;font-weight:600;color:var(--txt)">행안부 사회연대경제 공모</p><p style="font-size:11px;color:var(--txt3);margin-top:1px">118억 신규 편성 — 공고 즉시 확인</p></div><span style="font-size:12px;color:var(--g1);font-weight:600">확인 →</span></a>
+      <hr style="border:none;border-top:1px solid var(--bdr)">
+      <a href="https://ansim.nid.or.kr" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none;padding:8px 2px;min-height:52px"><div><p style="font-size:13px;font-weight:600;color:var(--txt)">중앙치매센터 공지사항</p><p style="font-size:11px;color:var(--txt3);margin-top:1px">정서지원 패키지 파트너 공모 모니터링</p></div><span style="font-size:12px;color:var(--g1);font-weight:600">확인 →</span></a>
+      <hr style="border:none;border-top:1px solid var(--bdr)">
+      <a href="https://proposal.chest.or.kr" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none;padding:8px 2px;min-height:52px"><div><p style="font-size:13px;font-weight:600;color:var(--txt)">사랑의열매 배분신청</p><p style="font-size:11px;color:var(--txt3);margin-top:1px">전국단위 신청사업 — 2026년 11월 예상</p></div><span style="font-size:12px;color:var(--g1);font-weight:600">확인 →</span></a>
+      <hr style="border:none;border-top:1px solid var(--bdr)">
+      <a href="https://npas.mois.go.kr" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none;padding:8px 2px;min-height:52px"><div><p style="font-size:13px;font-weight:600;color:var(--txt)">행안부 NPAS 공모</p><p style="font-size:11px;color:var(--txt3);margin-top:1px">비영리민간단체 공익활동 지원사업</p></div><span style="font-size:12px;color:var(--g1);font-weight:600">확인 →</span></a>
+    </div>
+  </div>
+  <div class="sec-label"><span class="sec-dot" style="background:var(--b1)"></span>알림 설정 (2단계 구현 예정)</div>
+  <div class="alert-card">
+    <p class="alert-title">마감 알림</p>
+    <div class="toggle-row"><div><p class="tgl-lbl">D-7 알림</p><p class="tgl-sub">마감 7일 전 제안서 준비 알림</p></div><label class="tgl"><input type="checkbox" checked><span class="tgl-sl"></span></label></div>
+    <div class="toggle-row"><div><p class="tgl-lbl">D-3 알림</p><p class="tgl-sub">마감 3일 전 긴급 알림</p></div><label class="tgl"><input type="checkbox" checked><span class="tgl-sl"></span></label></div>
+    <div class="toggle-row"><div><p class="tgl-lbl">D-1 알림</p><p class="tgl-sub">마감 전날 강조 알림</p></div><label class="tgl"><input type="checkbox" checked><span class="tgl-sl"></span></label></div>
+  </div>
+  <div class="alert-card">
+    <p class="alert-title">신규 공고 알림</p>
+    <div class="toggle-row"><div><p class="tgl-lbl">가족돌봄</p><p class="tgl-sub">가족돌봄 관련 신규 공모 감지</p></div><label class="tgl"><input type="checkbox" checked><span class="tgl-sl"></span></label></div>
+    <div class="toggle-row"><div><p class="tgl-lbl">요양보호사</p><p class="tgl-sub">요양보호사 대상 공모 감지</p></div><label class="tgl"><input type="checkbox" checked><span class="tgl-sl"></span></label></div>
+    <div class="toggle-row"><div><p class="tgl-lbl">ESG 기업</p><p class="tgl-sub">타깃 기업 사회공헌 뉴스</p></div><label class="tgl"><input type="checkbox"><span class="tgl-sl"></span></label></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ BOTTOM NAV ══ -->
+<nav class="bottom-nav">
+  <button class="tab-btn active" id="tn-dashboard" onclick="showTab('dashboard')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    공모
+  </button>
+  <button class="tab-btn" id="tn-esg" onclick="showTab('esg')">
+    <svg viewBox="0 0 24 24"><path d="M3 21h18M3 7v1a3 3 0 006 0V7M9 7v1a3 3 0 006 0V7M15 7v1a3 3 0 006 0V7M4 21V7l8-4 8 4v14"/></svg>
+    ESG기업
+  </button>
+  <button class="tab-btn" id="tn-policy" onclick="showTab('policy')">
+    <svg viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16M3 21h18M9 10h1M14 10h1M9 14h1M14 14h1"/></svg>
+    정책
+  </button>
+  <button class="tab-btn" id="tn-check" onclick="showTab('check')">
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    체크
+  </button>
+  <button class="tab-btn" id="tn-alert" onclick="showTab('alert')">
+    <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+    알림
+  </button>
+</nav>
+
+<script>
+// ── 타임스탬프
+function setTs(){
+  var n=new Date();
+  var y=n.getFullYear(),mo=n.getMonth()+1,d=n.getDate(),h=n.getHours(),m=n.getMinutes();
+  var pad=function(x){return x<10?'0'+x:x};
+  document.getElementById('ts-text').textContent=
+    y+'년 '+pad(mo)+'월 '+pad(d)+'일 '+pad(h)+'시 '+pad(m)+'분 현재';
+}
+setTs();
+setInterval(setTs,60000);
+
+// ── 타일 패널 토글
+var openId=null;
+function togglePanel(id){
+  var p=document.getElementById('panel-'+id);
+  var t=document.getElementById('tile-'+id);
+  if(openId&&openId!==id){
+    document.getElementById('panel-'+openId).classList.remove('open');
+    document.getElementById('tile-'+openId).classList.remove('active-tile');
+  }
+  if(p.classList.contains('open')){
+    p.classList.remove('open');t.classList.remove('active-tile');openId=null;
+  }else{
+    p.classList.add('open');t.classList.add('active-tile');openId=id;
+    p.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+}
+function closePanel(id){
+  document.getElementById('panel-'+id).classList.remove('open');
+  document.getElementById('tile-'+id).classList.remove('active-tile');
+  if(openId===id)openId=null;
+}
+
+// ── 탭 전환
+function showTab(name){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tn-'+name).classList.add('active');
+  // 패널 닫기
+  ['open','prep','watch','esg'].forEach(function(id){
+    var p=document.getElementById('panel-'+id);
+    if(p)p.classList.remove('open');
+    var t=document.getElementById('tile-'+id);
+    if(t)t.classList.remove('active-tile');
+  });
+  openId=null;
+  try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){window.scrollTo(0,0);}
+}
+
+// ── 필터
+function flt(type,btn){
+  document.querySelectorAll('.filter-scroll .f-btn').forEach(function(b){b.classList.remove('on')});
+  btn.classList.add('on');
+  document.querySelectorAll('#page-dashboard .card').forEach(function(c){
+    var s=c.dataset.s||'',cat=c.dataset.c||'';
+    var show=type==='all'||
+      (type==='open'&&s==='open')||(type==='prep'&&s==='prep')||(type==='watch'&&s==='watch')||
+      (type==='care'&&cat.indexOf('care')>-1)||(type==='mental'&&cat.indexOf('mental')>-1)||
+      (type==='welfare'&&cat.indexOf('welfare')>-1);
+    c.style.display=show?'block':'none';
+  });
+}
+
+// ── 체크리스트
+var gDef=[
+  {ids:[0,1,2,3],bar:'g0b',cnt:'g0c'},
+  {ids:[4,5,6,7],bar:'g1b',cnt:'g1c'},
+  {ids:[8,9,10], bar:'g2b',cnt:'g2c'},
+  {ids:[11,12,13],bar:'g3b',cnt:'g3c'}
+];
+var msgs=['0단계 필수 항목부터 시작하세요','잘 하고 있습니다!','절반 이상 완료!','거의 다 왔습니다!','모든 단계 완료 🎉'];
+function uc(){
+  var total=14,done=0;
+  gDef.forEach(function(g){
+    var gd=0;
+    g.ids.forEach(function(i){
+      var el=document.querySelector('#ci'+i+' input');
+      if(el&&el.checked){gd++;done++;}
+      var row=document.getElementById('ci'+i);
+      if(row)row.classList.toggle('done',el&&el.checked);
+    });
+    var pct=Math.round(gd/g.ids.length*100);
+    var bar=document.getElementById(g.bar);
+    var cnt=document.getElementById(g.cnt);
+    if(bar)bar.style.width=pct+'%';
+    if(cnt)cnt.textContent=gd+'/'+g.ids.length;
+  });
+  var ov=Math.round(done/total*100);
+  document.getElementById('prog-fill').style.width=ov+'%';
+  document.getElementById('prog-pct').textContent=ov+'%';
+  document.getElementById('prog-msg').textContent=msgs[Math.min(Math.floor(ov/25),4)];
+  try{
+    var st=[];
+    for(var i=0;i<14;i++){var e=document.querySelector('#ci'+i+' input');st.push(e?e.checked:false);}
+    localStorage.setItem('kema_v2',JSON.stringify(st));
+  }catch(e){}
+}
+(function loadChecks(){
+  try{
+    var st=JSON.parse(localStorage.getItem('kema_v2')||'[]');
+    st.forEach(function(v,i){var e=document.querySelector('#ci'+i+' input');if(e)e.checked=v;});
+    uc();
+  }catch(e){}
+})();
+
+// ── Google Sheets 자동 연동
+var SHEETS_API = 'https://script.google.com/macros/s/AKfycbyFy762HJZN_xVAnZKl3mnyvuWdDgCMGuX7MeTshlCfktlVQGNYPA4rDx5aCCsXg0EOwA/exec';
+
+function loadFromSheets() {
+  if (!SHEETS_API || SHEETS_API.indexOf('script.google') < 0) return;
+
+  // 공모사업 데이터
+  fetch(SHEETS_API + '?type=grant')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (!data.ok || !data.rows || data.rows.length === 0) return;
+
+      // 신규 항목만 필터 (마감 제외)
+      var active = data.rows.filter(function(r){
+        return r.stat !== '마감';
+      });
+
+      // 타일 카운트 업데이트
+      var openTile = document.querySelector('#tile-open .tile-num');
+      if (openTile) openTile.textContent = Math.min(active.length, 9);
+
+      // 즉시행동 패널 상위 3건 갱신
+      updateOpenPanel(active.slice(0, 3));
+    })
+    .catch(function(){});
+
+  // 마지막 갱신 시각
+  fetch(SHEETS_API + '?type=meta')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.updated) {
+        var ts = document.getElementById('ts-text');
+        if (ts) ts.textContent = data.updated + ' 현재 (자동갱신)';
+      }
+    })
+    .catch(function(){});
+}
+
+function updateOpenPanel(rows) {
+  var list = document.querySelector('#panel-open .panel-list');
+  if (!list || rows.length === 0) return;
+  list.innerHTML = '';
+  rows.forEach(function(r) {
+    var item = document.createElement('div');
+    item.className = 'panel-item';
+    var badge = r.url
+      ? '<a href="' + r.url + '" target="_blank" rel="noopener noreferrer" ' +
+        'class="pi-badge" style="text-decoration:none;background:var(--g3);color:var(--g1);' +
+        'padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600">바로가기</a>'
+      : '<span class="pi-badge">접수중</span>';
+    item.innerHTML =
+      '<div class="pi-dot" style="background:var(--g1)"></div>' +
+      '<div class="pi-body">' +
+        '<p class="pi-name">' + (r.title || '') + '</p>' +
+        '<p class="pi-sub">' + (r.src || '') +
+          (r.dline ? ' · 마감 ' + String(r.dline).substring(0,10) : '') +
+        '</p>' +
+      '</div>' + badge;
+    list.appendChild(item);
+  });
+}
+
+// 페이지 로드 시 즉시 실행
+document.addEventListener('DOMContentLoaded', function(){
+  loadFromSheets();
+  // 1시간마다 자동 갱신
+  setInterval(loadFromSheets, 3600000);
+});
+</script>
+</body>
+</html>
